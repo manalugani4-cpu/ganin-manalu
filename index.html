@@ -1,0 +1,626 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Rubik Kuis</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #eef2f7;
+    color: #1e293b;
+}
+
+.container {
+    max-width: 850px;
+    margin: 30px auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.header h1 {
+    color: #2563eb;
+    font-size: 32px;
+}
+
+.header p {
+    color: #64748b;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 3px 10px #00000010;
+}
+
+.stat-card h2 {
+    color: #2563eb;
+    margin: 0;
+    font-size: 28px;
+}
+
+.stat-card p {
+    margin-bottom: 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.card {
+    background: white;
+    padding: 22px;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 10px #00000010;
+}
+
+.rubik-title {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+#net {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 3px;
+    max-width: 390px;
+    margin: auto;
+}
+
+#net div {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    border: 1px solid #333;
+}
+
+.empty {
+    visibility: hidden;
+}
+
+.controls {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+    margin-top: 20px;
+}
+
+button {
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: .2s;
+}
+
+.controls button {
+    background: #2563eb;
+    color: white;
+}
+
+button:hover {
+    opacity: .8;
+    transform: translateY(-2px);
+}
+
+button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.question {
+    font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 18px;
+}
+
+.answers {
+    display: grid;
+    gap: 10px;
+}
+
+.answers button {
+    text-align: left;
+    background: #f1f5f9;
+    color: #1e293b;
+    border: 1px solid #cbd5e1;
+}
+
+.answers button:hover {
+    background: #dbeafe;
+}
+
+.answers button.correct {
+    background: #16a34a;
+    color: white;
+}
+
+.answers button.wrong {
+    background: #dc2626;
+    color: white;
+}
+
+.message {
+    font-weight: bold;
+    margin-top: 15px;
+    text-align: center;
+}
+
+.reset {
+    width: 100%;
+    background: #0f172a;
+    color: white;
+    margin-top: 10px;
+}
+
+#win {
+    display: none;
+    text-align: center;
+    color: #16a34a;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+@media(max-width: 500px) {
+    .container {
+        padding: 12px;
+    }
+
+    .controls {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stat-card {
+        padding: 12px 5px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🎮 RUBIK KUIS</h1>
+        <p>Jawab pertanyaan dan susun Rubik sampai selesai!</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <h2 id="energy">0</h2>
+            <p>Energi Gerakan</p>
+        </div>
+
+        <div class="stat-card">
+            <h2 id="moves">0</h2>
+            <p>Jumlah Langkah</p>
+        </div>
+
+        <div class="stat-card">
+            <h2 id="score">0</h2>
+            <p>Jawaban Benar</p>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="rubik-title">RUBIK 3 × 3</div>
+
+        <div id="net"></div>
+
+        <div class="controls" id="controls">
+            <button data-m="U">U</button>
+            <button data-m="U'">U'</button>
+            <button data-m="D">D</button>
+            <button data-m="D'">D'</button>
+            <button data-m="L">L</button>
+            <button data-m="L'">L'</button>
+            <button data-m="R">R</button>
+            <button data-m="R'">R'</button>
+            <button data-m="F">F</button>
+            <button data-m="F'">F'</button>
+            <button data-m="B">B</button>
+            <button data-m="B'">B'</button>
+        </div>
+
+        <p id="lock" class="message">
+            Jawab kuis untuk membuka gerakan Rubik.
+        </p>
+
+        <div id="win">
+            🎉 SELAMAT! RUBIK BERHASIL DISUSUN!
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="question" id="question"></div>
+        <div class="answers" id="answers"></div>
+        <div class="message" id="message"></div>
+    </div>
+
+    <button class="reset" onclick="scramble()">
+        🔄 Acak Rubik Baru
+    </button>
+
+</div>
+
+<script>
+
+// WARNA RUBIK
+const COLORS = {
+    "0,1,0": "#ffffff",
+    "0,-1,0": "#facc15",
+    "0,0,1": "#22c55e",
+    "0,0,-1": "#2563eb",
+    "1,0,0": "#ef4444",
+    "-1,0,0": "#f97316"
+};
+
+// DATA PERTANYAAN
+const questions = [
+    {
+        q: "Apa ibu kota Provinsi Sumatera Utara?",
+        a: ["Medan", "Padang", "Pekanbaru", "Palembang"],
+        correct: 0
+    },
+    {
+        q: "Berapa hasil 12 × 8?",
+        a: ["96", "86", "108", "92"],
+        correct: 0
+    },
+    {
+        q: "Planet paling dekat dengan Matahari?",
+        a: ["Merkurius", "Venus", "Mars", "Bumi"],
+        correct: 0
+    },
+    {
+        q: "Apa rumus kimia air?",
+        a: ["H2O", "CO2", "O2", "NaCl"],
+        correct: 0
+    },
+    {
+        q: "Siapa proklamator Indonesia bersama Mohammad Hatta?",
+        a: ["Soekarno", "Soeharto", "Sjahrir", "Ki Hajar Dewantara"],
+        correct: 0
+    },
+    {
+        q: "Berapa jumlah sisi kubus?",
+        a: ["6", "4", "8", "12"],
+        correct: 0
+    },
+    {
+        q: "Berapa hasil 144 ÷ 12?",
+        a: ["12", "14", "11", "13"],
+        correct: 0
+    },
+    {
+        q: "Benua terbesar di dunia?",
+        a: ["Asia", "Afrika", "Eropa", "Australia"],
+        correct: 0
+    }
+];
+
+// GERAKAN RUBIK
+const MOVES = {
+    U: [1, 1, -1],
+    D: [1, -1, 1],
+    L: [0, -1, 1],
+    R: [0, 1, -1],
+    F: [2, 1, -1],
+    B: [2, -1, 1]
+};
+
+let stickers = [];
+let energy = 0;
+let moves = 0;
+let score = 0;
+let won = false;
+let currentQuestion = 0;
+let busy = false;
+
+// MEMBUAT RUBIK
+function buildRubik() {
+    stickers = [];
+
+    for (let x = -1; x <= 1; x++) {
+        for (let y = -1; y <= 1; y++) {
+            for (let z = -1; z <= 1; z++) {
+
+                let p = [x, y, z];
+
+                for (let a = 0; a < 3; a++) {
+
+                    if (Math.abs(p[a]) === 1) {
+
+                        let n = [0, 0, 0];
+                        n[a] = p[a];
+
+                        stickers.push({
+                            p: [...p],
+                            n: n,
+                            c: COLORS[n.join(",")]
+                        });
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ROTASI RUBIK
+function rotate(v, axis, sign) {
+    const [x, y, z] = v;
+
+    if (axis === 0) return [x, -sign * z, sign * y];
+    if (axis === 1) return [sign * z, y, -sign * x];
+
+    return [-sign * y, sign * x, z];
+}
+
+// MEMUTAR SISI RUBIK
+function turn(axis, layer, sign) {
+
+    stickers.forEach(s => {
+
+        if (s.p[axis] === layer) {
+
+            s.p = rotate(s.p, axis, sign);
+            s.n = rotate(s.n, axis, sign);
+
+        }
+
+    });
+}
+
+// POSISI KOTAK RUBIK
+function position(s) {
+
+    const [x, y, z] = s.p;
+    const [a, b, c] = s.n;
+
+    if (b === 1) return [z + 1, 4 + x];
+    if (b === -1) return [7 - z, 4 + x];
+    if (c === 1) return [4 - y, 4 + x];
+    if (c === -1) return [4 - y, 10 - x];
+    if (a === 1) return [4 - y, 7 - z];
+
+    return [4 - y, 1 + z];
+}
+
+// CEK RUBIK SELESAI
+function isSolved() {
+
+    const faces = {};
+
+    stickers.forEach(s => {
+
+        const key = s.n.join(",");
+
+        if (!faces[key]) faces[key] = new Set();
+
+        faces[key].add(s.c);
+
+    });
+
+    return Object.values(faces).every(face => face.size === 1);
+}
+
+// MENAMPILKAN RUBIK
+function draw() {
+
+    const grid = Array(108).fill("");
+
+    stickers.forEach(s => {
+
+        const [r, c] = position(s);
+
+        grid[r * 12 + c] = s.c;
+
+    });
+
+    document.getElementById("net").innerHTML =
+        grid.map(c =>
+            c
+            ? `<div style="background:${c}"></div>`
+            : `<div class="empty"></div>`
+        ).join("");
+
+    document.getElementById("energy").textContent = energy;
+    document.getElementById("moves").textContent = moves;
+    document.getElementById("score").textContent = score;
+
+    document.querySelectorAll(".controls button")
+        .forEach(b => b.disabled = energy <= 0 || won);
+
+    document.getElementById("lock").textContent =
+        won ? "Rubik sudah tersusun!"
+        : energy > 0
+        ? "Kamu memiliki " + energy + " energi gerakan."
+        : "Jawab kuis untuk membuka gerakan.";
+
+    document.getElementById("win").style.display =
+        won ? "block" : "none";
+}
+
+// MENGACAK RUBIK
+function scramble() {
+
+    buildRubik();
+
+    for (let i = 0; i < 25; i++) {
+
+        const keys = Object.keys(MOVES);
+        const key = keys[Math.floor(Math.random() * keys.length)];
+
+        const [axis, layer, sign] = MOVES[key];
+
+        turn(axis, layer, Math.random() < 0.5 ? sign : -sign);
+    }
+
+    energy = 0;
+    moves = 0;
+    score = 0;
+    won = false;
+
+    draw();
+    nextQuestion();
+}
+
+// MENGACAK JAWABAN
+function shuffle(array) {
+
+    for (let i = array.length - 1; i > 0; i--) {
+
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [array[i], array[j]] = [array[j], array[i]];
+
+    }
+
+    return array;
+}
+
+// MENAMPILKAN PERTANYAAN
+function nextQuestion() {
+
+    if (currentQuestion >= questions.length) {
+        currentQuestion = 0;
+    }
+
+    const q = questions[currentQuestion++];
+
+    document.getElementById("question").textContent = q.q;
+
+    document.getElementById("message").textContent = "";
+
+    const options = shuffle(
+        q.a.map((answer, index) => ({
+            answer: answer,
+            correct: index === q.correct
+        }))
+    );
+
+    const container = document.getElementById("answers");
+
+    container.innerHTML = "";
+
+    options.forEach(option => {
+
+        const btn = document.createElement("button");
+
+        btn.textContent = option.answer;
+
+        btn.onclick = () => answerQuestion(option, btn, options);
+
+        container.appendChild(btn);
+
+    });
+
+    busy = false;
+}
+
+// MEMERIKSA JAWABAN
+function answerQuestion(option, btn, options) {
+
+    if (busy || won) return;
+
+    busy = true;
+
+    const buttons = document.querySelectorAll(".answers button");
+
+    buttons.forEach((b, i) => {
+
+        if (options[i].correct) {
+            b.classList.add("correct");
+        }
+
+        b.disabled = true;
+
+    });
+
+    if (option.correct) {
+
+        energy += 3;
+        score++;
+
+        document.getElementById("message").textContent =
+            "Benar! Kamu mendapatkan 3 energi.";
+
+        document.getElementById("message").style.color = "#16a34a";
+
+    } else {
+
+        btn.classList.add("wrong");
+
+        document.getElementById("message").textContent =
+            "Jawaban salah! Coba pertanyaan berikutnya.";
+
+        document.getElementById("message").style.color = "#dc2626";
+
+    }
+
+    draw();
+
+    setTimeout(nextQuestion, 1500);
+}
+
+// TOMBOL GERAKAN RUBIK
+document.getElementById("controls").onclick = function(e) {
+
+    const btn = e.target.closest("button");
+
+    if (!btn || btn.disabled || won) return;
+
+    const move = btn.dataset.m;
+
+    const inverse = move.endsWith("'");
+
+    const [axis, layer, sign] = MOVES[move[0]];
+
+    turn(axis, layer, inverse ? -sign : sign);
+
+    energy--;
+    moves++;
+
+    if (isSolved()) {
+        won = true;
+    }
+
+    draw();
+
+};
+
+// MEMULAI GAME
+buildRubik();
+
+document.querySelectorAll(".controls button")
+    .forEach(b => b.disabled = true);
+
+scramble();
+
+</script>
+
+</body>
+</html>
